@@ -72,6 +72,9 @@ $errorLCM = "Error - Check LCM"
 
 # ------------------- Change Variables Above ------------------- 
 
+# Variable to determine if script failed to run
+$failedRun = $null
+
 # Initial Screen Messaging
 clear;
 Write-Host $dateToday
@@ -294,49 +297,51 @@ if ($errorCluster -ne $null) {
 }
 
 # Save to Excel
-$excelApp = New-Object -ComObject Excel.Application
-$excelApp.Visible = $True
-$workBook = $excelApp.Workbooks.Add()
+if (!$failedRun) {
+    $excelApp = New-Object -ComObject Excel.Application
+    $excelApp.Visible = $True
+    $workBook = $excelApp.Workbooks.Add()
 
-$workSheet = $workBook.Worksheets.Item(1)
-$workSheet.Rows.HorizontalAlignment = -4131 
-$workSheet.Rows.Font.Size = 10
-$workSheet.Name = "Hosts Inventory"
-$row = $col = 1
-$hostXLHead = ("Cluster_Name","Host_Name","Host_Model","LCM_Version","LCM_Darksite","Host_UUID","Hypervisor_Version","AOS_Version","Foundation_Version","NCC_Version","BMC_Model","BMC_Version","BIOS_Model","BIOS_Version","HBA_Model","HBA_Version","Host_Boot_SATADOM_Model","Host_Boot_SATADOM_Version","Host_Boot_M2_Model","Host_Boot_M2_Version","SATA_Model","SATA_Version")
-$hostXLHead | %( $_  ){ $workSheet.Cells.Item($row,$col) = $_ ; $col++ }
-$workSheet.Rows.Item(1).Font.Bold = $True
-$workSheet.Rows.Item(1).HorizontalAlignment = -4108
-$workSheet.Rows.Item(1).Borders.Item(9).Weight = 2
-$workSheet.Rows.Item(1).Borders.Item(9).LineStyle = 1
+    $workSheet = $workBook.Worksheets.Item(1)
+    $workSheet.Rows.HorizontalAlignment = -4131 
+    $workSheet.Rows.Font.Size = 10
+    $workSheet.Name = "Hosts Inventory"
+    $row = $col = 1
+    $hostXLHead = ("Cluster_Name","Host_Name","Host_Model","LCM_Version","LCM_Darksite","Host_UUID","Hypervisor_Version","AOS_Version","Foundation_Version","NCC_Version","BMC_Model","BMC_Version","BIOS_Model","BIOS_Version","HBA_Model","HBA_Version","Host_Boot_SATADOM_Model","Host_Boot_SATADOM_Version","Host_Boot_M2_Model","Host_Boot_M2_Version","SATA_Model","SATA_Version")
+    $hostXLHead | %( $_  ){ $workSheet.Cells.Item($row,$col) = $_ ; $col++ }
+    $workSheet.Rows.Item(1).Font.Bold = $True
+    $workSheet.Rows.Item(1).HorizontalAlignment = -4108
+    $workSheet.Rows.Item(1).Borders.Item(9).Weight = 2
+    $workSheet.Rows.Item(1).Borders.Item(9).LineStyle = 1
 
-$i = 0; $row++; $col = 1
-FOREACH( $updateResult in $updateResults ){ 
-    $i = 0
-    DO{ 
-        $workSheet.Cells.Item($row,$col) = $updateResult.($hostXLHead[$i])
+    $i = 0; $row++; $col = 1
+    FOREACH( $updateResult in $updateResults ){ 
+        $i = 0
+        DO{ 
+            $workSheet.Cells.Item($row,$col) = $updateResult.($hostXLHead[$i])
 
-        If ($updateResult.($hostXLHead[$i]) -eq $errorLCM) {
-            $workSheet.Cells.Item($row,$col).Interior.ColorIndex = 36
-        }
+            If ($updateResult.($hostXLHead[$i]) -eq $errorLCM) {
+                $workSheet.Cells.Item($row,$col).Interior.ColorIndex = 36
+            }
 
-        $col++
-        $i++ 
-    }UNTIL($i -ge $hostXLHead.Count)
-    $row++; $col=1
-    Start-Sleep -m 250
-} 
-$workSheet.UsedRange.EntireColumn.AutoFit()
+            $col++
+            $i++ 
+        }UNTIL($i -ge $hostXLHead.Count)
+        $row++; $col=1
+        Start-Sleep -m 250
+    } 
+    $workSheet.UsedRange.EntireColumn.AutoFit()
 
-#Save Excel Workbook
-$Date = Get-Date
-$Today = (Get-Date).toshortdatestring().Replace("/","-")
-$filepath = $(get-location).Path + "/Nutanix_Hardware_Report-$Today.xlsx"
-$excelApp.DisplayAlerts = $False
-$workBook.SaveAs($filepath)
-$excelApp.Quit()
+    #Save Excel Workbook
+    $Date = Get-Date
+    $Today = (Get-Date).toshortdatestring().Replace("/","-")
+    $filepath = $(get-location).Path + "/Nutanix_Hardware_Report-$Today.xlsx"
+    $excelApp.DisplayAlerts = $False
+    $workBook.SaveAs($filepath)
+    $excelApp.Quit()
 
-Write-Host "`nFile Saved to: $filepath" -foregroundColor Yellow
+    Write-Host "`nFile Saved to: $filepath" -foregroundColor Yellow
+}
 
 # Cleanup sensitice information
 Remove-Variable username -ErrorAction SilentlyContinue
