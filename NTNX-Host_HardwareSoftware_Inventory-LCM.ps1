@@ -1,9 +1,10 @@
 ####################################################################################################
 #
 # NTNX-Host_HardwareSoftware_Inventory-LCM.ps1
-# Modified: 09/28/21
+# Modified: 2/03/22
 # Version:  3.1
 #
+# - 02/03/22 - Added comments and cleaned up code
 # - 09/28/21 - Updated LCM API calls so they are called only once per cluster instance - this greatly
 #              speeds up the script runtime. Calls are run outside of the host loop.
 # - 09/11/21 - Added error checking for cluster connectivity - will display an error message on the 
